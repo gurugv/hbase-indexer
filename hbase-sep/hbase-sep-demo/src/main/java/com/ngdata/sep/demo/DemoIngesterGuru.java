@@ -61,8 +61,8 @@ public class DemoIngesterGuru {
             byte[] rowkey = Bytes.toBytes(UUID.randomUUID().toString());
             Put put = new Put(rowkey);
 
-            String name = "guru" + i++;
-           // pickName(i++);
+            String name = "guru" + i;
+            // pickName(i++);
             String email = name.toLowerCase() + "@" + pickDomain();
             String age = String.valueOf((int) Math.ceil(Math.random() * 100));
 
@@ -75,7 +75,8 @@ public class DemoIngesterGuru {
             put.add(infoCf, payloadCq, jsonMapper.writeValueAsBytes(payload));
 
             htable.put(put);
-            System.out.println("Added row " + Bytes.toString(rowkey));
+            System.out.println("Added row " + Bytes.toString(rowkey) + " ( " + i + ")");
+            i++;
         }
     }
 
