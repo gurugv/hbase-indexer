@@ -72,7 +72,7 @@ public class LoggingConsumer {
                 System.out.println("  payload = " + Bytes.toString(sepEvent.getPayload()));
                 System.out.println("  key values = ");
                 for (KeyValue kv : sepEvent.getKeyValues()) {
-                    System.out.println("    " + kv.toString());
+                    System.out.println("    " + kv.toString() + " - "+new String(kv.getValue()));
                 }
             }
         }
