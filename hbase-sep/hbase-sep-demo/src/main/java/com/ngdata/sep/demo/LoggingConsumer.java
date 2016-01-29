@@ -71,6 +71,14 @@ public class LoggingConsumer {
 
         @Override
         public void processEvents(List<SepEvent> sepEvents) {
+            if(switches.contains("delay")){
+                System.out.println("Sleeping ");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
             for (SepEvent sepEvent : sepEvents) {
                 System.out.println("Received event: ");
                 String tableName = Bytes.toString(sepEvent.getTable());
