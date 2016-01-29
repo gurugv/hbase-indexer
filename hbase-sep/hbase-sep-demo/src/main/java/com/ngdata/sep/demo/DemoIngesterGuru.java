@@ -60,7 +60,7 @@ public class DemoIngesterGuru {
 
         HTable htable = new HTable(conf, "sep-user-demo");
         //94c89881-9ee5-4cf1-933c-9a2afa1dad0c
-        byte[] rowkey = Bytes.toBytes(UUID.randomUUID().toString());
+        byte[] rowkey = Bytes.toBytes("94c89881-9ee5-4cf1-933c-9a2afa1dad0c");//UUID.randomUUID().toString());
         long i = 0;
         while (true) {
 
