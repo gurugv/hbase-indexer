@@ -49,6 +49,7 @@ public class DemoIngesterGuru {
         final byte[] emailCq = Bytes.toBytes("email");
         final byte[] ageCq = Bytes.toBytes("age");
         final byte[] payloadCq = Bytes.toBytes("payload");
+        final byte[] sequencerCq = Bytes.toBytes("sequencer");
 
         loadData();
 
@@ -56,7 +57,7 @@ public class DemoIngesterGuru {
 
         HTable htable = new HTable(conf, "sep-user-demo");
 
-        int i = 0;
+        long i = 0;
         while (true) {
             byte[] rowkey = Bytes.toBytes(UUID.randomUUID().toString());
             Put put = new Put(rowkey);
@@ -69,6 +70,7 @@ public class DemoIngesterGuru {
             put.add(infoCf, nameCq, Bytes.toBytes(name));
             put.add(infoCf, emailCq, Bytes.toBytes(email));
             put.add(infoCf, ageCq, Bytes.toBytes(age));
+            put.add(infoCf, payloadCq, Bytes.toBytes(i));
 
             MyPayload payload = new MyPayload();
             payload.setPartialUpdate(false);

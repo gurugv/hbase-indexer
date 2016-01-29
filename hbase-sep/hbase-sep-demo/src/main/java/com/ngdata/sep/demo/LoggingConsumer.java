@@ -15,6 +15,7 @@
  */
 package com.ngdata.sep.demo;
 
+import java.util.Date;
 import java.util.List;
 
 import com.ngdata.sep.EventListener;
@@ -63,16 +64,29 @@ public class LoggingConsumer {
     }
 
     private static class EventLogger implements EventListener {
+        private static long lastSeqReceived = -1;
         @Override
         public void processEvents(List<SepEvent> sepEvents) {
             for (SepEvent sepEvent : sepEvents) {
-                System.out.println("Received event:");
-                System.out.println("  table = " + Bytes.toString(sepEvent.getTable()));
+                System.out.println("Received event: ");
+                String tableName = Bytes.toString(sepEvent.getTable());
+                System.out.println("  table = " + tableName);
                 System.out.println("  row = " + Bytes.toString(sepEvent.getRow()));
                 System.out.println("  payload = " + Bytes.toString(sepEvent.getPayload()));
                 System.out.println("  key values = ");
                 for (KeyValue kv : sepEvent.getKeyValues()) {
-                    System.out.println("    " + kv.toString() + " - "+new String(kv.getValue()));
+                    if(new String(kv.getKey()).equals("sequencer")){
+                        long currentSq = Bytes.toLong(kv.getValue());
+                        if(lastSeqReceived != -1){
+                            if(currentSq == lastSeqReceived +1){
+                                //ok
+                            }else{
+                                System.out.println("SEQUENCE NOT OK !!!! "+ currentSq + " :: "+lastSeqReceived);
+                            }
+                        }
+                        lastSeqReceived = currentSq;
+                    }
+                    System.out.println(lastSeqReceived+"    " + kv.toString() + " - "+new String(kv.getValue()) + " : "+new Date(kv.getTimestamp()) );
                 }
             }
         }
