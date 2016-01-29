@@ -26,14 +26,17 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
 public class DemoIngesterGuru {
     private List<String> names;
     private List<String> domains;
+    private static List<String> switches;
 
     public static void main(String[] args) throws Exception {
+        switches = Arrays.asList(args);
         new DemoIngesterGuru().run();
     }
 
@@ -56,6 +59,7 @@ public class DemoIngesterGuru {
         ObjectMapper jsonMapper = new ObjectMapper();
 
         HTable htable = new HTable(conf, "sep-user-demo");
+        //94c89881-9ee5-4cf1-933c-9a2afa1dad0c
         byte[] rowkey = Bytes.toBytes(UUID.randomUUID().toString());
         long i = 0;
         while (true) {

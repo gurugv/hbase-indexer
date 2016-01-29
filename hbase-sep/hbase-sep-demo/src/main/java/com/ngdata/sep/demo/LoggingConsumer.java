@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -36,7 +37,9 @@ import java.util.List;
  * A simple consumer that just logs the events.
  */
 public class LoggingConsumer {
+    private static List<String> switches;
     public static void main(String[] args) throws Exception {
+        switches = Arrays.asList(args);
         Configuration conf = HBaseConfiguration.create();
         conf.setBoolean("hbase.replication", true);
 
@@ -84,13 +87,15 @@ public class LoggingConsumer {
                             } else {
                                 System.out.println("SEQUENCE NOT OK !!!! " + currentSq + " :: " + lastSeqReceived);
 
-                                try {
-                                    Thread.sleep(100000);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
+                                if(!switches.contains("nowait")) {
+                                    try {
+                                        Thread.sleep(100000);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                    throw new RuntimeException("SEQUENCE NOT OK " + currentSq + " : " + lastSeqReceived);
                                 }
 
-                                throw new RuntimeException("SEQUENCE NOT OK " + currentSq + " : " + lastSeqReceived);
                             }
                         }
                         lastSeqReceived = currentSq;
