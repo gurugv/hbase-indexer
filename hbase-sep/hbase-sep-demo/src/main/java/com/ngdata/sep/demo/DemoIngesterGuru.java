@@ -56,10 +56,10 @@ public class DemoIngesterGuru {
         ObjectMapper jsonMapper = new ObjectMapper();
 
         HTable htable = new HTable(conf, "sep-user-demo");
-
+        byte[] rowkey = Bytes.toBytes(UUID.randomUUID().toString());
         long i = 0;
         while (true) {
-            byte[] rowkey = Bytes.toBytes(UUID.randomUUID().toString());
+
             Put put = new Put(rowkey);
 
             String name = "guru" + i;
@@ -70,7 +70,7 @@ public class DemoIngesterGuru {
             put.add(infoCf, nameCq, Bytes.toBytes(name));
             put.add(infoCf, emailCq, Bytes.toBytes(email));
             put.add(infoCf, ageCq, Bytes.toBytes(age));
-            put.add(infoCf, payloadCq, Bytes.toBytes(age));
+            put.add(infoCf, payloadCq, Bytes.toBytes(UUID.randomUUID().toString()));
             put.add(infoCf, sequencerCq, Bytes.toBytes(i));
 
             MyPayload payload = new MyPayload();

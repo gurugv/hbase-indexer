@@ -75,7 +75,7 @@ public class LoggingConsumer {
                 System.out.println("  payload = " + Bytes.toString(sepEvent.getPayload()));
                 System.out.println("  key values = ");
                 for (KeyValue kv : sepEvent.getKeyValues()) {
-                    if(new String(kv.getKey()).equals("sequencer")){
+                    if(new String(kv.getKey()).contains("sequencer")){
                         long currentSq = Bytes.toLong(kv.getValue());
                         if(lastSeqReceived != -1){
                             if(currentSq == lastSeqReceived +1){
