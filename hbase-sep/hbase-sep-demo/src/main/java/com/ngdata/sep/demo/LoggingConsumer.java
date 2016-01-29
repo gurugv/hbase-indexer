@@ -15,9 +15,6 @@
  */
 package com.ngdata.sep.demo;
 
-import java.util.Date;
-import java.util.List;
-
 import com.ngdata.sep.EventListener;
 import com.ngdata.sep.PayloadExtractor;
 import com.ngdata.sep.SepEvent;
@@ -31,6 +28,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.util.Bytes;
+
+import java.util.Date;
+import java.util.List;
 
 /**
  * A simple consumer that just logs the events.
@@ -65,6 +65,7 @@ public class LoggingConsumer {
 
     private static class EventLogger implements EventListener {
         private static long lastSeqReceived = -1;
+
         @Override
         public void processEvents(List<SepEvent> sepEvents) {
             for (SepEvent sepEvent : sepEvents) {
@@ -75,23 +76,26 @@ public class LoggingConsumer {
                 System.out.println("  payload = " + Bytes.toString(sepEvent.getPayload()));
                 System.out.println("  key values = ");
                 for (KeyValue kv : sepEvent.getKeyValues()) {
-                    if(new String(kv.getKey()).contains("sequencer")){
+                    if (new String(kv.getKey()).contains("sequencer")) {
                         long currentSq = Bytes.toLong(kv.getValue());
-                        if(lastSeqReceived != -1){
-                            if(currentSq == lastSeqReceived +1){
+                        if (lastSeqReceived != -1) {
+                            if (currentSq == lastSeqReceived + 1) {
                                 //ok
-                            }else{
-                                System.out.println("SEQUENCE NOT OK !!!! "+ currentSq + " :: "+lastSeqReceived);
+                            } else {
+                                System.out.println("SEQUENCE NOT OK !!!! " + currentSq + " :: " + lastSeqReceived);
+
                                 try {
                                     Thread.sleep(100000);
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
+
+                                throw new RuntimeException("SEQUENCE NOT OK " + currentSq + " : " + lastSeqReceived);
                             }
                         }
                         lastSeqReceived = currentSq;
                     }
-                    System.out.println(lastSeqReceived+  "    " + new String(kv.getKey())+" - (" + kv.toString() + ") - "+new String(kv.getValue()) + " : "+new Date(kv.getTimestamp()) );
+                    System.out.println(lastSeqReceived + "    " + new String(kv.getKey()) + " - (" + kv.toString() + ") - " + new String(kv.getValue()) + " : " + new Date(kv.getTimestamp()));
                 }
             }
         }
