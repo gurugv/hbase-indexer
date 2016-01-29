@@ -82,11 +82,16 @@ public class LoggingConsumer {
                                 //ok
                             }else{
                                 System.out.println("SEQUENCE NOT OK !!!! "+ currentSq + " :: "+lastSeqReceived);
+                                try {
+                                    Thread.sleep(100000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
                             }
                         }
                         lastSeqReceived = currentSq;
                     }
-                    System.out.println(lastSeqReceived+"    " + kv.toString() + " - "+new String(kv.getValue()) + " : "+new Date(kv.getTimestamp()) );
+                    System.out.println(lastSeqReceived+  "    " + new String(kv.getKey())+" - (" + kv.toString() + ") - "+new String(kv.getValue()) + " : "+new Date(kv.getTimestamp()) );
                 }
             }
         }

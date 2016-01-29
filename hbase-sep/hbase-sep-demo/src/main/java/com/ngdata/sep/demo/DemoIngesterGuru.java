@@ -70,7 +70,8 @@ public class DemoIngesterGuru {
             put.add(infoCf, nameCq, Bytes.toBytes(name));
             put.add(infoCf, emailCq, Bytes.toBytes(email));
             put.add(infoCf, ageCq, Bytes.toBytes(age));
-            put.add(infoCf, payloadCq, Bytes.toBytes(i));
+            put.add(infoCf, payloadCq, Bytes.toBytes(age));
+            put.add(infoCf, sequencerCq, Bytes.toBytes(i));
 
             MyPayload payload = new MyPayload();
             payload.setPartialUpdate(false);
