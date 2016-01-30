@@ -156,8 +156,8 @@ public class LoggingConsumer {
                             lastSeqReceived = currentSq;
                         }
                         Delete deleteOldVers = new Delete(sepEvent.getRow());
-                        deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.oldDataCq, allOldVersions.get((allOldVersions.size() - 1)).getTimestamp());
-                        deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.updateMapCq, allOldVersions.get((allOldVersions.size() - 1)).getTimestamp());
+                        deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.oldDataCq, allOldVersions.get(0).getTimestamp());
+                        deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.updateMapCq, allOldVersions.get(0).getTimestamp());
                         htable.delete(deleteOldVers);
                     }
                 } catch (IOException e) {
