@@ -134,15 +134,15 @@ public class LoggingConsumer {
                         System.out.println("  payload = " + Bytes.toString(sepEvent.getPayload()));
                         System.out.println("  key values = ");
                         System.out.println("AllVersuibs - " + allOldVersions.size());
-                        for (int i = allUpdates.size() -1 ; i >= 0; i--) {
+                        for (int i = allUpdates.size() - 1; i >= 0; i--) {
 
                             KeyValue keyValue = allUpdates.get(i);
                             long currentSq = Bytes.toLong(keyValue.getValue());
                             if (lastSeqReceived != -1) {
                                 if (currentSq == lastSeqReceived + 1) {
-                                    System.out.println(currentSq+" OK "+allOldVersions.get(i) + " new "+currentSq);
+                                    System.out.println(currentSq + " OK " + allOldVersions.get(i) + " new " + currentSq);
                                 } else {
-                                    System.out.println("SEQUENCE NOT OK !!!! " + currentSq + " :: " + lastSeqReceived);
+                                    System.out.println("SEQUENCE NOT OK !!!! " + allOldVersions.get(i) + ":" + currentSq + " :: " + lastSeqReceived);
 
                                     if (!switches.contains("nowait")) {
                                         try {
