@@ -117,10 +117,7 @@ public class LoggingConsumer {
                     continue;
                 }
                 String tableName = Bytes.toString(sepEvent.getTable());
-                System.out.println("  table = " + tableName);
-                System.out.println("  row = " + Bytes.toString(sepEvent.getRow()));
-                System.out.println("  payload = " + Bytes.toString(sepEvent.getPayload()));
-                System.out.println("  key values = ");
+
 
                 Get getAllVer = new Get(sepEvent.getRow());
                 try {
@@ -132,6 +129,10 @@ public class LoggingConsumer {
                         System.out.println(" ALLREADY CONSUMED ?? ");
                         continue;
                     } else {
+                        System.out.println("  table = " + tableName);
+                        System.out.println("  row = " + Bytes.toString(sepEvent.getRow()));
+                        System.out.println("  payload = " + Bytes.toString(sepEvent.getPayload()));
+                        System.out.println("  key values = ");
                         System.out.println("AllVersuibs - " + allOldVersions.size());
                         for (int i = allUpdates.size() -1 ; i >= 0; i--) {
 

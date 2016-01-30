@@ -74,15 +74,16 @@ public class DemoIngester {
 
             htable.put(put);
             System.out.println("Added row " + Bytes.toString(rowkey));
+            Thread.sleep(1); //assuming atleast a single ms delay between updates to same row, park concurrency for now.
         }
     }
 
     private String pickName() {
-        return names.get((int)Math.floor(Math.random() * names.size()));
+        return names.get((int) Math.floor(Math.random() * names.size()));
     }
 
     private String pickDomain() {
-        return domains.get((int)Math.floor(Math.random() * domains.size()));
+        return domains.get((int) Math.floor(Math.random() * domains.size()));
     }
 
     private void loadData() throws IOException {
