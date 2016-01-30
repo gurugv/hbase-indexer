@@ -96,6 +96,24 @@ public class LoggingConsumer {
             }
             for (SepEvent sepEvent : sepEvents) {
                 System.out.println("Received event: ");
+                boolean allDelete = false;
+                for(KeyValue  kv : sepEvent.getKeyValues()){
+                    if(kv.isDelete() ){
+                        allDelete = true;
+                    }else{
+                        allDelete = false;
+                        break;
+                    }
+                }
+                if(allDelete){
+                    System.out.println("Skpping event , looks like all delete : "+sepEvent.getKeyValues().size());
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    continue;
+                }
                 String tableName = Bytes.toString(sepEvent.getTable());
                 System.out.println("  table = " + tableName);
                 System.out.println("  row = " + Bytes.toString(sepEvent.getRow()));
@@ -107,11 +125,12 @@ public class LoggingConsumer {
                     getAllVer.setMaxVersions(1000);
                     Result result = htable.get(getAllVer);
                     List<KeyValue> column = result.getColumn(DemoSchema.logCq, DemoSchema.oldDataCq);
-                    if(column.size() == 0){
-                        return " ALLREADY CONSUMED ?? "
+                    if (column.size() == 0) {
+                        System.out.println(" ALLREADY CONSUMED ?? ");
+                    }else {
+                        System.out.println("AllVersuibs - " + column.size());
+                        System.out.println(column.get(0));
                     }
-                    System.out.println("AllVersuibs - " + column.size());
-                    System.out.println(column);
                     Delete deleteOldVers = new Delete();
                     for (int i = 0; i < column.size(); i++) {
                         deleteOldVers.addDeleteMarker(column.get(i));
@@ -122,6 +141,7 @@ public class LoggingConsumer {
                 }
 
                 for (KeyValue kv : sepEvent.getKeyValues()) {
+
                     if (new String(kv.getKey()).contains("sequencer")) {
                         long currentSq = Bytes.toLong(kv.getValue());
                         if (lastSeqReceived != -1) {
