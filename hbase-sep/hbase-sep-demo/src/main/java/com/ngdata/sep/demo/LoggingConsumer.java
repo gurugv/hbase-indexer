@@ -152,8 +152,8 @@ public class LoggingConsumer {
                                         //  throw new RuntimeException("SEQUENCE NOT OK " + currentSq + " : " + lastSeqReceived);
                                     }
                                 }
-                                lastSeqReceived = currentSq;
                             }
+                            lastSeqReceived = currentSq;
                         }
                         Delete deleteOldVers = new Delete(sepEvent.getRow());
                         deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.oldDataCq, allOldVersions.get((allOldVersions.size() - 1)).getTimestamp());
