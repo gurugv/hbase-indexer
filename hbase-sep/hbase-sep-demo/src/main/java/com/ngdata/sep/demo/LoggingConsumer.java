@@ -108,7 +108,7 @@ public class LoggingConsumer {
                 if (allDelete) {
                     System.out.println("Skpping event , looks like all delete : " + sepEvent.getKeyValues().size());
                     try {
-                        Thread.sleep(2000);
+                        Thread.sleep(0);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -133,7 +133,7 @@ public class LoggingConsumer {
                     }
                     Delete deleteOldVers = new Delete(sepEvent.getRow());
                     deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.oldDataCq, column.get((column.size() - 1)).getTimestamp());
-                   
+
                     htable.delete(deleteOldVers);
                 } catch (IOException e) {
                     e.printStackTrace();
