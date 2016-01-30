@@ -127,6 +127,7 @@ public class LoggingConsumer {
                     List<KeyValue> column = result.getColumn(DemoSchema.logCq, DemoSchema.oldDataCq);
                     if (column.size() == 0) {
                         System.out.println(" ALLREADY CONSUMED ?? ");
+                        continue;
                     } else {
                         System.out.println("AllVersuibs - " + column.size());
                         System.out.println(column.get(0));
