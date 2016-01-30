@@ -37,6 +37,7 @@ public class DemoIngesterGuru {
     private List<String> names;
     private List<String> domains;
 
+
     public static void main(String[] args) throws Exception {
         switches = Arrays.asList(args);
         new DemoIngesterGuru().run();
@@ -46,7 +47,6 @@ public class DemoIngesterGuru {
         Configuration conf = HBaseConfiguration.create();
 
         DemoSchema.createSchema(conf);
-
 
 
         loadData();
@@ -65,6 +65,7 @@ public class DemoIngesterGuru {
             if (oldVal != null) {
                 NavigableMap<byte[], byte[]> infoMap = oldVal.getFamilyMap(DemoSchema.infoCf);
                 put.add(DemoSchema.logCq, DemoSchema.oldDataCq, jsonMapper.writeValueAsBytes(infoMap));
+                put.add(DemoSchema.logCq, DemoSchema.updateMapCq, Bytes.toBytes(i));
             }
 
 

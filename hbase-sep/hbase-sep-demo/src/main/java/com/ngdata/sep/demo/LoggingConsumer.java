@@ -32,10 +32,10 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -44,6 +44,8 @@ import java.util.List;
 public class LoggingConsumer {
     private static List<String> switches;
     private static Configuration conf;
+
+    private static ObjectMapper jsonMapper = new ObjectMapper();
 
     public static void main(String[] args) throws Exception {
         switches = Arrays.asList(args);
@@ -63,7 +65,7 @@ public class LoggingConsumer {
                 Bytes.toBytes("payload"));
 
         SepConsumer sepConsumer = new SepConsumer(subscriptionName, 0, new EventLogger(), 1, "slm-dev2.nm.flipkart.com", zk, conf,
-                payloadExtractor);
+                null);
 
         sepConsumer.start();
         System.out.println("Started");
@@ -122,48 +124,44 @@ public class LoggingConsumer {
 
                 Get getAllVer = new Get(sepEvent.getRow());
                 try {
-                    getAllVer.setMaxVersions(1000);
+                    getAllVer.setMaxVersions(DemoSchema.LAG_TOLARANCE);
                     Result result = htable.get(getAllVer);
-                    List<KeyValue> column = result.getColumn(DemoSchema.logCq, DemoSchema.oldDataCq);
-                    if (column.size() == 0) {
+                    List<KeyValue> allOldVersions = result.getColumn(DemoSchema.logCq, DemoSchema.oldDataCq);
+                    List<KeyValue> allUpdates = result.getColumn(DemoSchema.logCq, DemoSchema.updateMapCq);
+                    if (allOldVersions.size() == 0) {
                         System.out.println(" ALLREADY CONSUMED ?? ");
                         continue;
                     } else {
-                        System.out.println("AllVersuibs - " + column.size());
-                        System.out.println(column.get(0));
-                    }
-                    Delete deleteOldVers = new Delete(sepEvent.getRow());
-                    deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.oldDataCq, column.get((column.size() - 1)).getTimestamp());
+                        System.out.println("AllVersuibs - " + allOldVersions.size());
+                        for (int i = 0; i < allUpdates.size(); i++) {
 
-                    htable.delete(deleteOldVers);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                            KeyValue keyValue = allUpdates.get(i);
+                            long currentSq = Bytes.toLong(keyValue.getValue());
+                            if (lastSeqReceived != -1) {
+                                if (currentSq == lastSeqReceived + 1) {
+                                    System.out.println(currentSq+" OK "+allOldVersions.get(i) + " new "+currentSq);
+                                } else {
+                                    System.out.println("SEQUENCE NOT OK !!!! " + currentSq + " :: " + lastSeqReceived);
 
-                for (KeyValue kv : sepEvent.getKeyValues()) {
-
-                    if (new String(kv.getKey()).contains("sequencer")) {
-                        long currentSq = Bytes.toLong(kv.getValue());
-                        if (lastSeqReceived != -1) {
-                            if (currentSq == lastSeqReceived + 1) {
-                                //ok
-                            } else {
-                                System.out.println("SEQUENCE NOT OK !!!! " + currentSq + " :: " + lastSeqReceived);
-
-                                if (!switches.contains("nowait")) {
-                                    try {
-                                        Thread.sleep(100000);
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
+                                    if (!switches.contains("nowait")) {
+                                        try {
+                                            Thread.sleep(10000);
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                        //  throw new RuntimeException("SEQUENCE NOT OK " + currentSq + " : " + lastSeqReceived);
                                     }
-                                    throw new RuntimeException("SEQUENCE NOT OK " + currentSq + " : " + lastSeqReceived);
                                 }
-
+                                lastSeqReceived = currentSq;
                             }
                         }
-                        lastSeqReceived = currentSq;
+                        Delete deleteOldVers = new Delete(sepEvent.getRow());
+                        deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.oldDataCq, allOldVersions.get((allOldVersions.size() - 1)).getTimestamp());
+                        deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.updateMapCq, allOldVersions.get((allOldVersions.size() - 1)).getTimestamp());
+                        htable.delete(deleteOldVers);
                     }
-                    System.out.println(lastSeqReceived + "    " + new String(kv.getKey()) + " - (" + kv.toString() + ") - " + new String(kv.getValue()) + " : " + new Date(kv.getTimestamp()));
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         }

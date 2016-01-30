@@ -26,13 +26,15 @@ import java.io.IOException;
 
 public class DemoSchema {
 
-    public static final String DEMO_TABLE = "sep-user-demo-1";
+    public static final String DEMO_TABLE = "sep-user-demo-2";
     // column qualifiers
     public static final byte[] nameCq = Bytes.toBytes("name");
     public static final byte[] sequencerCq = Bytes.toBytes("sequencer");
     public static final byte[] oldDataCq = Bytes.toBytes("oldData");
+    public static final byte[] updateMapCq = Bytes.toBytes("updateMap");
     public static final byte[] infoCf = Bytes.toBytes("info");
     public static final byte[] logCq = Bytes.toBytes("log");
+    public static final int LAG_TOLARANCE = 10000;
 
     public static void main(String[] args) throws Exception {
         Configuration conf = HBaseConfiguration.create();
@@ -49,7 +51,7 @@ public class DemoSchema {
             tableDescriptor.addFamily(infoCf);
             HColumnDescriptor logCf = new HColumnDescriptor("log");
             logCf.setScope(1);
-            logCf.setMaxVersions(1000);
+            logCf.setMaxVersions(LAG_TOLARANCE);
             tableDescriptor.addFamily(logCf);
             admin.createTable(tableDescriptor);
         }
