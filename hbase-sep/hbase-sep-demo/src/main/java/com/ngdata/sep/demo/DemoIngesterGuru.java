@@ -17,8 +17,10 @@ package com.ngdata.sep.demo;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -28,12 +30,12 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
+import java.util.NavigableMap;
 
 public class DemoIngesterGuru {
+    private static List<String> switches;
     private List<String> names;
     private List<String> domains;
-    private static List<String> switches;
 
     public static void main(String[] args) throws Exception {
         switches = Arrays.asList(args);
@@ -45,41 +47,31 @@ public class DemoIngesterGuru {
 
         DemoSchema.createSchema(conf);
 
-        final byte[] infoCf = Bytes.toBytes("info");
 
-        // column qualifiers
-        final byte[] nameCq = Bytes.toBytes("name");
-        final byte[] emailCq = Bytes.toBytes("email");
-        final byte[] ageCq = Bytes.toBytes("age");
-        final byte[] payloadCq = Bytes.toBytes("payload");
-        final byte[] sequencerCq = Bytes.toBytes("sequencer");
 
         loadData();
 
         ObjectMapper jsonMapper = new ObjectMapper();
 
-        HTable htable = new HTable(conf, "sep-user-demo");
+        HTable htable = new HTable(conf, DemoSchema.DEMO_TABLE);
         //94c89881-9ee5-4cf1-933c-9a2afa1dad0c
         byte[] rowkey = Bytes.toBytes("94c89881-9ee5-4cf1-933c-9a2afa1dad0c");//UUID.randomUUID().toString());
         long i = 0;
         while (true) {
 
             Put put = new Put(rowkey);
+            Get get = new Get(rowkey);
+            Result oldVal = htable.get(get);
+            if (oldVal != null) {
+                NavigableMap<byte[], byte[]> infoMap = oldVal.getFamilyMap(DemoSchema.infoCf);
+                put.add(DemoSchema.logCq, DemoSchema.oldDataCq, jsonMapper.writeValueAsBytes(infoMap));
+            }
+
 
             String name = "guru" + i;
-            // pickName(i++);
-            String email = name.toLowerCase() + "@" + pickDomain();
-            String age = String.valueOf((int) Math.ceil(Math.random() * 100));
 
-            put.add(infoCf, nameCq, Bytes.toBytes(name));
-            put.add(infoCf, emailCq, Bytes.toBytes(email));
-            put.add(infoCf, ageCq, Bytes.toBytes(age));
-            put.add(infoCf, payloadCq, Bytes.toBytes(UUID.randomUUID().toString()));
-            put.add(infoCf, sequencerCq, Bytes.toBytes(i));
-
-            MyPayload payload = new MyPayload();
-            payload.setPartialUpdate(false);
-            put.add(infoCf, payloadCq, jsonMapper.writeValueAsBytes(payload));
+            put.add(DemoSchema.infoCf, DemoSchema.nameCq, Bytes.toBytes(name));
+            put.add(DemoSchema.infoCf, DemoSchema.sequencerCq, Bytes.toBytes(i));
 
             htable.put(put);
             System.out.println("Added row " + Bytes.toString(rowkey) + " ( " + i + ")");

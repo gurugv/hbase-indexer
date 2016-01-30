@@ -27,8 +27,13 @@ import com.ngdata.sep.util.zookeeper.ZooKeeperItf;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -38,9 +43,11 @@ import java.util.List;
  */
 public class LoggingConsumer {
     private static List<String> switches;
+    private static Configuration conf;
+
     public static void main(String[] args) throws Exception {
         switches = Arrays.asList(args);
-        Configuration conf = HBaseConfiguration.create();
+        conf = HBaseConfiguration.create();
         conf.setBoolean("hbase.replication", true);
 
         ZooKeeperItf zk = ZkUtil.connect("localhost", 20000);
@@ -69,9 +76,17 @@ public class LoggingConsumer {
     private static class EventLogger implements EventListener {
         private static long lastSeqReceived = -1;
 
+
         @Override
         public void processEvents(List<SepEvent> sepEvents) {
-            if(switches.contains("delay")){
+            HTable htable = null;
+            try {
+                htable = new HTable(conf, DemoSchema.DEMO_TABLE);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (switches.contains("delay")) {
                 System.out.println("Sleeping ");
                 try {
                     Thread.sleep(1000);
@@ -86,6 +101,26 @@ public class LoggingConsumer {
                 System.out.println("  row = " + Bytes.toString(sepEvent.getRow()));
                 System.out.println("  payload = " + Bytes.toString(sepEvent.getPayload()));
                 System.out.println("  key values = ");
+
+                Get getAllVer = new Get(sepEvent.getRow());
+                try {
+                    getAllVer.setMaxVersions(1000);
+                    Result result = htable.get(getAllVer);
+                    List<KeyValue> column = result.getColumn(DemoSchema.logCq, DemoSchema.oldDataCq);
+                    if(column.size() == 0){
+                        return " ALLREADY CONSUMED ?? "
+                    }
+                    System.out.println("AllVersuibs - " + column.size());
+                    System.out.println(column);
+                    Delete deleteOldVers = new Delete();
+                    for (int i = 0; i < column.size(); i++) {
+                        deleteOldVers.addDeleteMarker(column.get(i));
+                    }
+                    htable.delete(deleteOldVers);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 for (KeyValue kv : sepEvent.getKeyValues()) {
                     if (new String(kv.getKey()).contains("sequencer")) {
                         long currentSq = Bytes.toLong(kv.getValue());
@@ -95,7 +130,7 @@ public class LoggingConsumer {
                             } else {
                                 System.out.println("SEQUENCE NOT OK !!!! " + currentSq + " :: " + lastSeqReceived);
 
-                                if(!switches.contains("nowait")) {
+                                if (!switches.contains("nowait")) {
                                     try {
                                         Thread.sleep(100000);
                                     } catch (InterruptedException e) {

@@ -20,10 +20,20 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 
 public class DemoSchema {
+
+    public static final String DEMO_TABLE = "sep-user-demo-1";
+    // column qualifiers
+    public static final byte[] nameCq = Bytes.toBytes("name");
+    public static final byte[] sequencerCq = Bytes.toBytes("sequencer");
+    public static final byte[] oldDataCq = Bytes.toBytes("oldData");
+    public static final byte[] infoCf = Bytes.toBytes("info");
+    public static final byte[] logCq = Bytes.toBytes("log");
+
     public static void main(String[] args) throws Exception {
         Configuration conf = HBaseConfiguration.create();
         createSchema(conf);
@@ -31,13 +41,16 @@ public class DemoSchema {
 
     public static void createSchema(Configuration hbaseConf) throws IOException {
         HBaseAdmin admin = new HBaseAdmin(hbaseConf);
-        if (!admin.tableExists("sep-user-demo")) {
-            HTableDescriptor tableDescriptor = new HTableDescriptor("sep-user-demo");
+        if (!admin.tableExists(DEMO_TABLE)) {
+            HTableDescriptor tableDescriptor = new HTableDescriptor(DEMO_TABLE);
 
             HColumnDescriptor infoCf = new HColumnDescriptor("info");
             infoCf.setScope(1);
             tableDescriptor.addFamily(infoCf);
-
+            HColumnDescriptor logCf = new HColumnDescriptor("log");
+            logCf.setScope(1);
+            logCf.setMaxVersions(1000);
+            tableDescriptor.addFamily(logCf);
             admin.createTable(tableDescriptor);
         }
         admin.close();
