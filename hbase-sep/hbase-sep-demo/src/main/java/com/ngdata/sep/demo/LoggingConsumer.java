@@ -97,16 +97,16 @@ public class LoggingConsumer {
             for (SepEvent sepEvent : sepEvents) {
                 System.out.println("Received event: ");
                 boolean allDelete = false;
-                for(KeyValue  kv : sepEvent.getKeyValues()){
-                    if(kv.isDelete() ){
+                for (KeyValue kv : sepEvent.getKeyValues()) {
+                    if (kv.isDelete()) {
                         allDelete = true;
-                    }else{
+                    } else {
                         allDelete = false;
                         break;
                     }
                 }
-                if(allDelete){
-                    System.out.println("Skpping event , looks like all delete : "+sepEvent.getKeyValues().size());
+                if (allDelete) {
+                    System.out.println("Skpping event , looks like all delete : " + sepEvent.getKeyValues().size());
                     try {
                         Thread.sleep(2000);
                     } catch (InterruptedException e) {
@@ -127,15 +127,13 @@ public class LoggingConsumer {
                     List<KeyValue> column = result.getColumn(DemoSchema.logCq, DemoSchema.oldDataCq);
                     if (column.size() == 0) {
                         System.out.println(" ALLREADY CONSUMED ?? ");
-                    }else {
+                    } else {
                         System.out.println("AllVersuibs - " + column.size());
                         System.out.println(column.get(0));
                     }
                     Delete deleteOldVers = new Delete(sepEvent.getRow());
-                    for (int i = 0; i < column.size(); i++) {
-                      
-                        deleteOldVers.addDeleteMarker(column.get(i));
-                    }
+                    deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.oldDataCq, column.get((column.size() - 1)).getTimestamp());
+                   
                     htable.delete(deleteOldVers);
                 } catch (IOException e) {
                     e.printStackTrace();
