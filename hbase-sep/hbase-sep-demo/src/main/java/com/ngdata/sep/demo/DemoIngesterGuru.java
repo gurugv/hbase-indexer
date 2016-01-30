@@ -77,6 +77,7 @@ public class DemoIngesterGuru {
             htable.put(put);
             System.out.println("Added row " + Bytes.toString(rowkey) + " ( " + i + ")");
             i++;
+            Thread.sleep(1, 500); //assuming atleast a single ms delay between updates to same row, park concurrency for now.
         }
     }
 
