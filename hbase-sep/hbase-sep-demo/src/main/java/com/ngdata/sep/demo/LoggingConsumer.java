@@ -133,7 +133,7 @@ public class LoggingConsumer {
                         continue;
                     } else {
                         System.out.println("AllVersuibs - " + allOldVersions.size());
-                        for (int i = 0; i < allUpdates.size(); i++) {
+                        for (int i = allUpdates.size() -1 ; i >= 0; i--) {
 
                             KeyValue keyValue = allUpdates.get(i);
                             long currentSq = Bytes.toLong(keyValue.getValue());
