@@ -131,8 +131,9 @@ public class LoggingConsumer {
                         System.out.println("AllVersuibs - " + column.size());
                         System.out.println(column.get(0));
                     }
-                    Delete deleteOldVers = new Delete();
+                    Delete deleteOldVers = new Delete(sepEvent.getRow());
                     for (int i = 0; i < column.size(); i++) {
+                      
                         deleteOldVers.addDeleteMarker(column.get(i));
                     }
                     htable.delete(deleteOldVers);
