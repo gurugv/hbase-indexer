@@ -131,11 +131,12 @@ public class LoggingConsumer {
                     getAllVer.setMaxVersions(DemoSchema.LAG_TOLARANCE);
                     Result result = htable.get(getAllVer);
                     List<KeyValue> allOldVersions = result.getColumn(DemoSchema.logCq, DemoSchema.oldDataCq);
-                    List<KeyValue> allUpdates = result.getColumn(DemoSchema.logCq, DemoSchema.updateMapCq);
+
                     if (allOldVersions.size() == 0) {
-                        System.out.println(" ALLREADY CONSUMED ?? ");
+                        System.out.println(" ALLREADY CONSUMED ?? " + Bytes.toString(sepEvent.getRow()));
                         continue;
                     } else {
+                        List<KeyValue> allUpdates = result.getColumn(DemoSchema.logCq, DemoSchema.updateMapCq);
                         System.out.println("  table = " + tableName);
                         System.out.println("  row = " + Bytes.toString(sepEvent.getRow()));
                         System.out.println("  payload = " + Bytes.toString(sepEvent.getPayload()));
