@@ -83,7 +83,7 @@ public class LoggingConsumer {
         public void processEvents(List<SepEvent> sepEvents) {
             if (switches.contains("throwerror")) {
 
-                System.out.println("Throwing erorr ");
+                System.out.println("Throwing erorr " + Bytes.toString(sepEvents.get(0).getRow()));
                 throw new RuntimeException(sepEvents.toString()
                 );
             }
