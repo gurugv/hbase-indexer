@@ -64,7 +64,7 @@ public class LoggingConsumer {
         PayloadExtractor payloadExtractor = new BasePayloadExtractor(Bytes.toBytes("sep-user-demo"), Bytes.toBytes("info"),
                 Bytes.toBytes("payload"));
 
-        SepConsumer sepConsumer = new SepConsumer(subscriptionName, 0, new EventLogger(), 1, "slm-dev2.nm.flipkart.com", zk, conf,
+        SepConsumer sepConsumer = new SepConsumer(subscriptionName, 0, new EventLogger(), 2, "slm-dev2.nm.flipkart.com", zk, conf,
                 null);
 
         sepConsumer.start();
@@ -81,6 +81,7 @@ public class LoggingConsumer {
 
         @Override
         public void processEvents(List<SepEvent> sepEvents) {
+            System.out.println(Thread.currentThread().getId() + "  : " + Thread.currentThread().getName());
             if (switches.contains("throwerror")) {
 
                 System.out.println("Throwing erorr " + Bytes.toString(sepEvents.get(0).getRow()));
