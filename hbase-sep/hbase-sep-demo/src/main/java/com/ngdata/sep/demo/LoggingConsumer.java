@@ -81,6 +81,12 @@ public class LoggingConsumer {
 
         @Override
         public void processEvents(List<SepEvent> sepEvents) {
+            if (switches.contains("throwerror")) {
+
+                System.out.println("Throwing erorr ");
+                throw new RuntimeException(sepEvents.toString()
+                );
+            }
             HTable htable = null;
             try {
                 htable = new HTable(conf, DemoSchema.DEMO_TABLE);
@@ -160,6 +166,8 @@ public class LoggingConsumer {
                         deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.oldDataCq, allOldVersions.get(0).getTimestamp());
                         deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.updateMapCq, allOldVersions.get(0).getTimestamp());
                         htable.delete(deleteOldVers);
+
+
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
