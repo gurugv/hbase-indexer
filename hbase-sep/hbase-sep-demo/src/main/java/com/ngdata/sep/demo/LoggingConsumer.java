@@ -136,12 +136,16 @@ public class LoggingConsumer {
                         System.out.println(" ALLREADY CONSUMED ?? " + Bytes.toString(sepEvent.getRow()));
                         continue;
                     } else {
-                        List<KeyValue> allUpdates = result.getColumn(DemoSchema.logCq, DemoSchema.updateMapCq);
+
                         System.out.println("  table = " + tableName);
                         System.out.println("  row = " + Bytes.toString(sepEvent.getRow()));
                         System.out.println("  payload = " + Bytes.toString(sepEvent.getPayload()));
                         System.out.println("  key values = ");
                         System.out.println("AllVersuibs - " + allOldVersions.size());
+                        if(switches.contains("waitperrow")){
+                            Thread.sleep(500);
+                        }
+                        List<KeyValue> allUpdates = result.getColumn(DemoSchema.logCq, DemoSchema.updateMapCq);
                         for (int i = allUpdates.size() - 1; i >= 0; i--) {
 
                             KeyValue keyValue = allUpdates.get(i);
@@ -149,6 +153,9 @@ public class LoggingConsumer {
                             if (lastSeqReceived != -1) {
                                 if (currentSq == lastSeqReceived + 1) {
                                     System.out.println(currentSq + " OK " + allOldVersions.get(i) + " new " + currentSq);
+                                    if(switches.contains("waitpercl")){
+                                        Thread.sleep(100);
+                                    }
                                 } else {
                                     System.out.println("SEQUENCE NOT OK !!!! " + allOldVersions.get(i) + ":" + currentSq + " :: " + lastSeqReceived);
 
@@ -172,6 +179,8 @@ public class LoggingConsumer {
 
                     }
                 } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
