@@ -57,7 +57,11 @@ public class DemoIngesterGuru {
         //94c89881-9ee5-4cf1-933c-9a2afa1dad0c
         byte[] rowkey = Bytes.toBytes("94c89881-9ee5-4cf1-933c-9a2afa1dad0c");//UUID.randomUUID().toString());
         long i = 0;
+        int row = 0;
         while (true) {
+            if (switches.contains("manyrows")) {
+                rowkey = Bytes.toBytes("row" + row);
+            }
 
             Put put = new Put(rowkey);
             Get get = new Get(rowkey);
@@ -78,6 +82,9 @@ public class DemoIngesterGuru {
             System.out.println("Added row " + Bytes.toString(rowkey) + " ( " + i + ")");
             i++;
             Thread.sleep(1, 500); //assuming atleast a single ms delay between updates to same row, park concurrency for now.
+            if (i % 10000 == 0) {
+                row++;
+            }
         }
     }
 
