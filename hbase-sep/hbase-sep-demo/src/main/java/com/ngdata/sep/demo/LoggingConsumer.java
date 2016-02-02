@@ -96,7 +96,7 @@ public class LoggingConsumer {
                 e.printStackTrace();
             }
             if (switches.contains("delay")) {
-                System.out.println("Sleeping ");
+                System.out.println("Sleeping 1000ms");
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -104,6 +104,7 @@ public class LoggingConsumer {
                 }
             }
             for (SepEvent sepEvent : sepEvents) {
+                final long consumeStartTs = System.currentTimeMillis();
                 System.out.println("Received event: ");
                 boolean allDelete = false;
                 for (KeyValue kv : sepEvent.getKeyValues()) {
@@ -125,11 +126,12 @@ public class LoggingConsumer {
                 }
                 String tableName = Bytes.toString(sepEvent.getTable());
 
-
+                final long getAllVerTs = System.currentTimeMillis();
                 Get getAllVer = new Get(sepEvent.getRow());
                 try {
                     getAllVer.setMaxVersions(DemoSchema.LAG_TOLARANCE);
                     Result result = htable.get(getAllVer);
+                    System.out.println("Get all versions took " + Long.toString(System.currentTimeMillis() - getAllVerTs) + " ms");
                     List<KeyValue> allOldVersions = result.getColumn(DemoSchema.logCq, DemoSchema.oldDataCq);
 
                     if (allOldVersions.size() == 0) {
@@ -161,6 +163,7 @@ public class LoggingConsumer {
 
                                     if (!switches.contains("nowait")) {
                                         try {
+                                            System.out.println("Waiting 10000ms <<backoff>>");
                                             Thread.sleep(10000);
                                         } catch (InterruptedException e) {
                                             e.printStackTrace();
@@ -171,13 +174,17 @@ public class LoggingConsumer {
                             }
                             lastSeqReceived = currentSq;
                         }
+
+                        final long deleteOldVersTs = System.currentTimeMillis();
                         Delete deleteOldVers = new Delete(sepEvent.getRow());
                         deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.oldDataCq, allOldVersions.get(0).getTimestamp());
                         deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.updateMapCq, allOldVersions.get(0).getTimestamp());
                         htable.delete(deleteOldVers);
-
+                        System.out.println("Delete versions took " + Long.toString(System.currentTimeMillis() - deleteOldVersTs) + " ms");
 
                     }
+
+                    System.out.println("SepEvent consumption took " + Long.toString(System.currentTimeMillis() - consumeStartTs) + " ms");
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (InterruptedException e) {
