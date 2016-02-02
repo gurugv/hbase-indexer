@@ -20,13 +20,14 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 
 public class DemoSchema {
 
-    public static final String DEMO_TABLE = "sep-user-demo-2";
+    public static final String DEMO_TABLE = "sep-user-demo-3";
     // column qualifiers
     public static final byte[] nameCq = Bytes.toBytes("name");
     public static final byte[] sequencerCq = Bytes.toBytes("sequencer");
@@ -52,6 +53,7 @@ public class DemoSchema {
             HColumnDescriptor logCf = new HColumnDescriptor("log");
             logCf.setScope(1);
             logCf.setMaxVersions(LAG_TOLARANCE);
+            logCf.setCompressionType(Compression.Algorithm.LZO);
             tableDescriptor.addFamily(logCf);
             admin.createTable(tableDescriptor);
         }
