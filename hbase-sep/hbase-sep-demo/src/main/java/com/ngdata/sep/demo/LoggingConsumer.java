@@ -64,7 +64,12 @@ public class LoggingConsumer {
         PayloadExtractor payloadExtractor = new BasePayloadExtractor(Bytes.toBytes("sep-user-demo"), Bytes.toBytes("info"),
                 Bytes.toBytes("payload"));
 
-        SepConsumer sepConsumer = new SepConsumer(subscriptionName, 0, new EventLogger(), 2, "slm-dev2.nm.flipkart.com", zk, conf,
+        int numThreads = 1;
+
+        if (switches.contains("multithreaded"))
+            numThreads = 4;
+
+        SepConsumer sepConsumer = new SepConsumer(subscriptionName, 0, new EventLogger(), numThreads, "slm-dev2.nm.flipkart.com", zk, conf,
                 null);
 
         sepConsumer.start();
