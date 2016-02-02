@@ -27,10 +27,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.NavigableMap;
+import java.util.*;
 
 public class DemoIngesterGuru {
     private static List<String> switches;
@@ -58,11 +55,12 @@ public class DemoIngesterGuru {
         byte[] rowkey = Bytes.toBytes("94c89881-9ee5-4cf1-933c-9a2afa1dad0c");//UUID.randomUUID().toString());
         long i = 0;
         int row = 0;
+        String rowId = UUID.randomUUID().toString();
         while (true) {
             long startTs = System.currentTimeMillis();
 
             if (switches.contains("manyrows")) {
-                rowkey = Bytes.toBytes("row" + row);
+                rowkey = Bytes.toBytes("row-" + rowId + "=" + row);
             }
 
             Put put = new Put(rowkey);
