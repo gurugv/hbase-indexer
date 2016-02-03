@@ -27,7 +27,7 @@ import java.io.IOException;
 
 public class DemoSchema {
 
-    public static final String DEMO_TABLE = "sep-user-demo-4";
+    public static final String DEMO_TABLE = "sep-user-demo-3";
     // column qualifiers
     public static final byte[] nameCq = Bytes.toBytes("name");
     public static final byte[] sequencerCq = Bytes.toBytes("sequencer");
@@ -53,7 +53,7 @@ public class DemoSchema {
             HColumnDescriptor logCf = new HColumnDescriptor("log");
             logCf.setScope(1);
             logCf.setMaxVersions(LAG_TOLARANCE);
-            logCf.setCompressionType(Compression.Algorithm.LZO);
+            logCf.setCompressionType(Compression.Algorithm.SNAPPY);
             tableDescriptor.addFamily(logCf);
             admin.createTable(tableDescriptor);
         }
