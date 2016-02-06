@@ -111,6 +111,10 @@ public class LoggingConsumer {
 
     }
 
+    static private boolean notSilent() {
+        return (!switches.contains("silent"));
+    }
+
     private static class EventLogger implements EventListener {
         private static long lastSeqReceived = -1;
         private final Producer<String, String> producer;
@@ -146,7 +150,8 @@ public class LoggingConsumer {
             }
             for (SepEvent sepEvent : sepEvents) {
                 final long consumeStartTs = System.currentTimeMillis();
-                System.out.println("Received event: ");
+                if (notSilent())
+                    System.out.println("Received event: ");
                 boolean allDelete = false;
                 for (KeyValue kv : sepEvent.getKeyValues()) {
                     if (kv.isDelete()) {
@@ -157,7 +162,8 @@ public class LoggingConsumer {
                     }
                 }
                 if (allDelete) {
-                    System.out.println("Skpping event , looks like all delete : " + sepEvent.getKeyValues().size());
+                    if (notSilent())
+                        System.out.println("Skpping event , looks like all delete : " + sepEvent.getKeyValues().size());
                     try {
                         Thread.sleep(0);
                     } catch (InterruptedException e) {
@@ -173,11 +179,13 @@ public class LoggingConsumer {
                 try {
                     getAllVer.setMaxVersions(DemoSchema.LAG_TOLARANCE);
                     Result result = htable.get(getAllVer);
-                    System.out.println("Get all versions took " + Long.toString(System.currentTimeMillis() - getAllVerTs) + " ms");
+                    if (notSilent())
+                        System.out.println("Get all versions took " + Long.toString(System.currentTimeMillis() - getAllVerTs) + " ms");
                     List<KeyValue> allOldVersions = result.getColumn(DemoSchema.logCq, DemoSchema.oldDataCq);
 
                     if (allOldVersions.size() == 0) {
-                        System.out.println(" ALLREADY CONSUMED ?? " + Bytes.toString(sepEvent.getRow()));
+                        if (notSilent())
+                            System.out.println(" ALLREADY CONSUMED ?? " + Bytes.toString(sepEvent.getRow()));
                         continue;
                     } else {
 
@@ -204,6 +212,7 @@ public class LoggingConsumer {
                                     System.out.println(currentSq + " OK " + allOldVersions.get(i) + " new " + currentSq);
                                     ProducerRecord<String, String> producerRecord = new ProducerRecord<String, String>(topic, key, allOldVersions.get(i).toString());
                                     Future<RecordMetadata> sendResult = producer.send(producerRecord);
+                                    System.out.println(" Sent to kafka " + sendResult);
                                     resultList.add(sendResult);
 
                                     if (switches.contains("waitpercl")) {
