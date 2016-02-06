@@ -65,7 +65,7 @@ public class LoggingConsumer {
         props.put("serializer.class", "kafka.serializer.StringEncoder");
         props.put("key.serializer", org.apache.kafka.common.serialization.StringSerializer.class);
         props.put("value.serializer", org.apache.kafka.common.serialization.StringSerializer.class);
-      //  props.put("partitioner.class", "example.producer.SimplePartitioner");
+        //  props.put("partitioner.class", "example.producer.SimplePartitioner");
         props.put("request.required.acks", "1");
     }
 
@@ -212,11 +212,15 @@ public class LoggingConsumer {
                             long currentSq = Bytes.toLong(keyValue.getValue());
                             if (lastSeqReceived != -1) {
                                 if (currentSq == lastSeqReceived + 1) {
+
                                     System.out.println(currentSq + " OK " + allOldVersions.get(i) + " new " + currentSq);
+                                    long kafkaSt = System.currentTimeMillis();
                                     ProducerRecord<String, String> producerRecord = new ProducerRecord<String, String>(topic, key, allOldVersions.get(i).toString());
                                     Future<RecordMetadata> sendResult = producer.send(producerRecord);
-                                    System.out.println(" Sent to kafka " + sendResult);
-                                    resultList.add(sendResult);
+                                    long offset = sendResult.get().offset();
+                                    System.out.println(" Sent to kafka " + offset + " - " + (System.currentTimeMillis() - kafkaSt));
+
+                                    // resultList.add(sendResult);
 
                                     if (switches.contains("waitpercl")) {
                                         Thread.sleep(100);
