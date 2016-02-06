@@ -206,6 +206,7 @@ public class LoggingConsumer {
                         List<Future<RecordMetadata>> resultList = new ArrayList<Future<RecordMetadata>>();
                         System.out.println("TODO : Take a lock on " + key + " Zk Ephemeral Node, if not already exist");
                         System.out.println("TODO : Get last processed timestamp for this key " + key + " : Get lastprocessedTs/offset from a persistent store, and mov");
+                        long batchSt = System.currentTimeMillis();
                         for (int i = allUpdates.size() - 1; i >= 0; i--) {
 
                             KeyValue keyValue = allUpdates.get(i);
@@ -242,16 +243,15 @@ public class LoggingConsumer {
                             lastSeqReceived = currentSq;
                         }
 
-                        if (resultList.size() > 0) {
 
-                            resultList.get(result.size() - 1).get(); //waitfor last ack
-                            final long deleteOldVersTs = System.currentTimeMillis();
-                            Delete deleteOldVers = new Delete(sepEvent.getRow());
-                            deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.oldDataCq, allOldVersions.get(0).getTimestamp());
-                            deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.updateMapCq, allOldVersions.get(0).getTimestamp());
-                            htable.delete(deleteOldVers);
-                            System.out.println("Delete versions took " + Long.toString(System.currentTimeMillis() - deleteOldVersTs) + " ms");
-                        }
+                        System.out.println(" Time taken to process " + allUpdates.size() + "  - " + (System.currentTimeMillis() - batchSt));
+                        // resultList.get(result.size() - 1).get(); //waitfor last ack
+                        final long deleteOldVersTs = System.currentTimeMillis();
+                        Delete deleteOldVers = new Delete(sepEvent.getRow());
+                        deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.oldDataCq, allOldVersions.get(0).getTimestamp());
+                        deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.updateMapCq, allOldVersions.get(0).getTimestamp());
+                        htable.delete(deleteOldVers);
+                        System.out.println("Delete versions took " + Long.toString(System.currentTimeMillis() - deleteOldVersTs) + " ms");
                     }
 
                     System.out.println("SepEvent consumption took " + Long.toString(System.currentTimeMillis() - consumeStartTs) + " ms");
