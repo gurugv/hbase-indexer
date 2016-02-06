@@ -32,11 +32,19 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * A simple consumer that just logs the events.
@@ -47,10 +55,24 @@ public class LoggingConsumer {
 
     private static ObjectMapper jsonMapper = new ObjectMapper();
 
+    private static Properties props = new Properties();
+
+
+    static {
+
+        props.put("metadata.broker.list", "slm-dev1.nm.flipkart.com:9092,slm-dev2.nm.flipkart.com:9092");
+        props.put("serializer.class", "kafka.serializer.StringEncoder");
+        props.put("partitioner.class", "example.producer.SimplePartitioner");
+        props.put("request.required.acks", "1");
+    }
+
     public static void main(String[] args) throws Exception {
+
         switches = Arrays.asList(args);
         conf = HBaseConfiguration.create();
         conf.setBoolean("hbase.replication", true);
+
+        final Producer<String, String> producer = new KafkaProducer<String, String>(props);
 
         ZooKeeperItf zk = ZkUtil.connect("localhost", 20000);
         SepModel sepModel = new SepModelImpl(zk, conf);
@@ -69,19 +91,33 @@ public class LoggingConsumer {
         if (switches.contains("multithreaded"))
             numThreads = 4;
 
-        SepConsumer sepConsumer = new SepConsumer(subscriptionName, 0, new EventLogger(), numThreads, "slm-dev2.nm.flipkart.com", zk, conf,
+        SepConsumer sepConsumer = new SepConsumer(subscriptionName, 0, new EventLogger(producer), numThreads, "slm-dev2.nm.flipkart.com", zk, conf,
                 null);
 
         sepConsumer.start();
         System.out.println("Started");
 
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                System.out.println("Shutting down...");
+                producer.close();
+                System.out.println("Shutdown complete.");
+            }
+        });
         while (true) {
             Thread.sleep(Long.MAX_VALUE);
         }
+
     }
 
     private static class EventLogger implements EventListener {
         private static long lastSeqReceived = -1;
+        private final Producer<String, String> producer;
+
+        public EventLogger(Producer<String, String> producer) {
+            this.producer = producer;
+        }
 
 
         @Override
@@ -131,6 +167,7 @@ public class LoggingConsumer {
                 }
                 String tableName = Bytes.toString(sepEvent.getTable());
 
+                String topic = tableName;
                 final long getAllVerTs = System.currentTimeMillis();
                 Get getAllVer = new Get(sepEvent.getRow());
                 try {
@@ -149,10 +186,15 @@ public class LoggingConsumer {
                         System.out.println("  payload = " + Bytes.toString(sepEvent.getPayload()));
                         System.out.println("  key values = ");
                         System.out.println("AllVersuibs - " + allOldVersions.size());
-                        if(switches.contains("waitperrow")){
-                            Thread.sleep(500);
+                        String key = Bytes.toString(sepEvent.getRow());
+
+                        if (switches.contains("waitperrow")) {
+                            //
                         }
                         List<KeyValue> allUpdates = result.getColumn(DemoSchema.logCq, DemoSchema.updateMapCq);
+                        List<Future<RecordMetadata>> resultList = new ArrayList<Future<RecordMetadata>>();
+                        System.out.println("TODO : Take a lock on " + key + " Zk Ephemeral Node, if not already exist");
+                        System.out.println("TODO : Get last processed timestamp for this key " + key + " : Get lastprocessedTs/offset from a persistent store, and mov");
                         for (int i = allUpdates.size() - 1; i >= 0; i--) {
 
                             KeyValue keyValue = allUpdates.get(i);
@@ -160,7 +202,11 @@ public class LoggingConsumer {
                             if (lastSeqReceived != -1) {
                                 if (currentSq == lastSeqReceived + 1) {
                                     System.out.println(currentSq + " OK " + allOldVersions.get(i) + " new " + currentSq);
-                                    if(switches.contains("waitpercl")){
+                                    ProducerRecord<String, String> producerRecord = new ProducerRecord<String, String>(topic, key, allOldVersions.get(i).toString());
+                                    Future<RecordMetadata> sendResult = producer.send(producerRecord);
+                                    resultList.add(sendResult);
+
+                                    if (switches.contains("waitpercl")) {
                                         Thread.sleep(100);
                                     }
                                 } else {
@@ -180,19 +226,24 @@ public class LoggingConsumer {
                             lastSeqReceived = currentSq;
                         }
 
-                        final long deleteOldVersTs = System.currentTimeMillis();
-                        Delete deleteOldVers = new Delete(sepEvent.getRow());
-                        deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.oldDataCq, allOldVersions.get(0).getTimestamp());
-                        deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.updateMapCq, allOldVersions.get(0).getTimestamp());
-                        htable.delete(deleteOldVers);
-                        System.out.println("Delete versions took " + Long.toString(System.currentTimeMillis() - deleteOldVersTs) + " ms");
+                        if (resultList.size() > 0) {
 
+                            resultList.get(result.size() - 1).get(); //waitfor last ack
+                            final long deleteOldVersTs = System.currentTimeMillis();
+                            Delete deleteOldVers = new Delete(sepEvent.getRow());
+                            deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.oldDataCq, allOldVersions.get(0).getTimestamp());
+                            deleteOldVers.deleteColumns(DemoSchema.logCq, DemoSchema.updateMapCq, allOldVersions.get(0).getTimestamp());
+                            htable.delete(deleteOldVers);
+                            System.out.println("Delete versions took " + Long.toString(System.currentTimeMillis() - deleteOldVersTs) + " ms");
+                        }
                     }
 
                     System.out.println("SepEvent consumption took " + Long.toString(System.currentTimeMillis() - consumeStartTs) + " ms");
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
                     e.printStackTrace();
                 }
             }
