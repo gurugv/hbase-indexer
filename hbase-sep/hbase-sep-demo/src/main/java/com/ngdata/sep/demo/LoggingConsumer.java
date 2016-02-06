@@ -65,7 +65,7 @@ public class LoggingConsumer {
         props.put("serializer.class", "kafka.serializer.StringEncoder");
         props.put("key.serializer", org.apache.kafka.common.serialization.StringSerializer.class);
         props.put("value.serializer", org.apache.kafka.common.serialization.StringSerializer.class);
-        props.put("partitioner.class", "example.producer.SimplePartitioner");
+      //  props.put("partitioner.class", "example.producer.SimplePartitioner");
         props.put("request.required.acks", "1");
     }
 
