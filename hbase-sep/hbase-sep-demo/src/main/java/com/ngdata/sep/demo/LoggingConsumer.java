@@ -220,7 +220,7 @@ public class LoggingConsumer {
                                     long offset = sendResult.get().offset();
                                     System.out.println(" Sent to kafka " + offset + " - " + (System.currentTimeMillis() - kafkaSt));
 
-                                    // resultList.add(sendResult);
+                                    resultList.add(sendResult);
 
                                     if (switches.contains("waitpercl")) {
                                         Thread.sleep(100);
