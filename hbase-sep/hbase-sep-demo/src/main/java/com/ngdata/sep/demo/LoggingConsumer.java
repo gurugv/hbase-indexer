@@ -61,6 +61,7 @@ public class LoggingConsumer {
     static {
 
         props.put("metadata.broker.list", "slm-dev1.nm.flipkart.com:9092,slm-dev2.nm.flipkart.com:9092");
+        props.put("bootstrap.servers", "slm-dev1.nm.flipkart.com:9092,slm-dev2.nm.flipkart.com:9092");
         props.put("serializer.class", "kafka.serializer.StringEncoder");
         props.put("partitioner.class", "example.producer.SimplePartitioner");
         props.put("request.required.acks", "1");
