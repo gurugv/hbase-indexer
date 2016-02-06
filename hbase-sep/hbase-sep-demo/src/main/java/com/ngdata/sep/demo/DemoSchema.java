@@ -53,7 +53,7 @@ public class DemoSchema {
             HColumnDescriptor logCf = new HColumnDescriptor("log");
             logCf.setScope(1);
             logCf.setMaxVersions(LAG_TOLARANCE);
-            logCf.setCompressionType(Compression.Algorithm.SNAPPY);
+            //logCf.setCompressionType(Compression.Algorithm.SNAPPY);
             tableDescriptor.addFamily(logCf);
             admin.createTable(tableDescriptor);
         }
